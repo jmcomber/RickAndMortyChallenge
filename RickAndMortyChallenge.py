@@ -30,6 +30,17 @@ class RickAndMortyConsumer:
         count = reduce(lambda a, b: (a['name'].count(letter) if isinstance(a, dict) else a) + (b['name'].count(letter) if isinstance(b, dict) else b), responseDict['results'])
         return count
 
+    def countCharsQueried(self, queries):
+        start = time.time()
+        for letter, resource in queries:
+            count = self.letterCounterInResource(letter, resource)
+            print(f'Letter {letter} in resource {resource} was found {count} times')
+        end = time.time()
+        print(f'Time elapsed: {end - start} seconds')
+
+
 if __name__ == '__main__':
     rickAndMortyConsumer = RickAndMortyConsumer()
-    print(rickAndMortyConsumer.letterCounterInResource('l', 'location'))
+    rickAndMortyConsumer.countCharsQueried([['l', 'location'],
+                                            ['e', 'episode'],
+                                            ['c', 'character']])
