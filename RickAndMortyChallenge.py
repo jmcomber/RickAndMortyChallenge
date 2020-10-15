@@ -24,20 +24,22 @@ class RickAndMortyConsumer:
             if counter == 10:
                 raise Exception('There seems to be a problem with the API')
             counter += 1
-
-    def _getCounts(self, letter, results):
-        count = 0
-        for result in results:
-            count += result['name'].lower().count(letter)
-        return count
-
-    def _letterCounterInResource(self, letter, resource):
+    
+    def _getPaginatedResults(self, resource):
+        results = []
         responseDict = self._redundantGetter(self._baseURL + resource)
-        count = self._getCounts(letter, responseDict['results'])
+        results.extend(responseDict['results'])
         while responseDict['info']['next'] is not None:
             responseDict = self._redundantGetter(responseDict['info']['next'])
-            count += self._getCounts(letter, responseDict['results'])
-            print('count ', count)
+            results.extend(responseDict['results'])
+        return results
+
+    def _getCounts(self, letter, results):
+        return sum(result['name'].lower().count(letter) for result in results)
+
+    def _letterCounterInResource(self, letter, resource):
+        results = self._getPaginatedResults(resource)
+        count = self._getCounts(letter, results)
         return count
 
     def countCharsQueried(self, queries):
@@ -48,10 +50,6 @@ class RickAndMortyConsumer:
         end = time.time()
         print(f'Time elapsed: {round(end - start, 2)} seconds')
 
-    def getLocationsFromEpisodes(self):
-        episodes = self._redundantGetter(self._baseURL + 'episode')['results']
-        print(len(episodes), episodes[0])
-
 
 if __name__ == '__main__':
     rickAndMortyConsumer = RickAndMortyConsumer()
@@ -59,4 +57,4 @@ if __name__ == '__main__':
                                             ['e', 'episode'],
                                             ['c', 'character']])
     
-    # rickAndMortyConsumer.getLocationsFromEpisodes()
+    
