@@ -37,6 +37,7 @@ class RickAndMortyConsumer:
             counter += 1
     
     def _getPaginatedResults(self, resource):
+        '''TODO: parallellize using grequests library to speed up'''
         results = {}
         responseDict = self._redundantGetter(self._baseURL + resource)
         results.update({result['url']: result for result in responseDict['results']})
@@ -50,7 +51,7 @@ class RickAndMortyConsumer:
     def _getCounts(self, letter, results):
         return sum(len(re.findall(rf'({letter.lower()}|{letter.upper()})', result['name'])) for result in results.values())
 
-    def _letterCounterInResource(self, letter, resource):
+    def _countLettersInResource(self, letter, resource):
         results = self._getPaginatedResults(resource)
         count = self._getCounts(letter, results)
         return count
@@ -58,11 +59,11 @@ class RickAndMortyConsumer:
     @timing_val
     def countCharsQueried(self, queries):
         '''Returns a dictionary with a composite key (letter, resource),
-        and with the occurrences as value.
+        and with the number of occurrences as value.
         For example, ('c', 'location') -> 23'''
         results = {}
         for letter, resource in queries:
-            count = self._letterCounterInResource(letter, resource)
+            count = self._countLettersInResource(letter, resource)
             results[(letter, resource)] = count
         return results
 
@@ -70,7 +71,7 @@ class RickAndMortyConsumer:
     def getLocationsFromEpisodes(self):
         '''Returns a dictionary the episode's name as key, and with the 
         value being the origins' locations as a set.
-        For example, ('Pilot') -> {'Earth C-130', 'uknown', ...}'''
+        For example, 'Pilot' -> {'Earth C-130', 'uknown', ...}'''
         episodes = self._getPaginatedResults('episode')
         if self._chars is None:
             self._getPaginatedResults('character')
