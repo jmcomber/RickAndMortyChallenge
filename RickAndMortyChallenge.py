@@ -1,17 +1,26 @@
 '''
-Author: 
-Date: 
-...
+Author: José Manuel Comber (@jmcomber)
+Date: 2020-10-15
+Summary: This file, when executed, prints the results and execution times of 
+the two asked challenges: count the occurrences of certain characters, 
+and find the origin locations of every character for every episode
 '''
-
 from collections import defaultdict
 import time
 import re
 import requests
 
 
+def timing_val(func):
+    def wrapper(*arg, **kw):
+        t1 = time.time()
+        result = func(*arg, **kw)
+        t2 = time.time()
+        return (t2 - t1), result
+    return wrapper
+
+
 class RickAndMortyConsumer:
-    
     def __init__(self):
         self._baseURL = 'https://rickandmortyapi.com/api/'
         self._chars = None
@@ -46,19 +55,22 @@ class RickAndMortyConsumer:
         count = self._getCounts(letter, results)
         return count
 
+    @timing_val
     def countCharsQueried(self, queries):
-        start = time.time()
+        '''Returns a dictionary with a composite key (letter, resource),
+        and with the occurrences as value.
+        For example, ('c', 'location') -> 23'''
         results = {}
         for letter, resource in queries:
             count = self._letterCounterInResource(letter, resource)
-            # print(f'Letter {letter} in resource {resource} was found {count} times')
             results[(letter, resource)] = count
-        end = time.time()
-        # print(f'Time elapsed: {round(end - start, 2)} seconds')
-        return end - start, results
+        return results
 
+    @timing_val
     def getLocationsFromEpisodes(self):
-        start = time.time()
+        '''Returns a dictionary the episode's name as key, and with the 
+        value being the origins' locations as a set.
+        For example, ('Pilot') -> {'Earth C-130', 'uknown', ...}'''
         episodes = self._getPaginatedResults('episode')
         if self._chars is None:
             self._getPaginatedResults('character')
@@ -68,8 +80,7 @@ class RickAndMortyConsumer:
             episodeChars = episode['characters']
             for char in episodeChars:
                 locationsPerEpisode[episode['name']].add(self._chars[char]['origin']['name'])
-        end = time.time()
-        return end - start, locationsPerEpisode
+        return locationsPerEpisode
 
     def prettyPrintCharCount(self, results):
         for (letter, resource) in results:
@@ -81,12 +92,13 @@ class RickAndMortyConsumer:
 
 if __name__ == '__main__':
     rickAndMortyConsumer = RickAndMortyConsumer()
-    executionTimeCharCount, charCounts = rickAndMortyConsumer.countCharsQueried([['l', 'location'],
-                                            ['e', 'episode'],
-                                            ['c', 'character']])
+    executionTimeCharCount, charCounts = rickAndMortyConsumer.countCharsQueried(
+        [['l', 'location'],
+        ['e', 'episode'],
+        ['c', 'character']])
     print('\nPart 1\n')
     rickAndMortyConsumer.prettyPrintCharCount(charCounts)
-    print(f'Execution time was {executionTimeCharCount} second')
+    print(f'Execution time was {executionTimeCharCount} seconds')
     print('\nPart 2\n')
     executionTimeLocationsPerEpisode, locationsPerEpisode = rickAndMortyConsumer.getLocationsFromEpisodes()
     rickAndMortyConsumer.prettyPrintLocationsFromEpisodes(locationsPerEpisode)
