@@ -6,6 +6,7 @@ Date:
 
 from collections import defaultdict
 import time
+import re
 import requests
 
 
@@ -38,7 +39,7 @@ class RickAndMortyConsumer:
         return results
 
     def _getCounts(self, letter, results):
-        return sum(result['name'].lower().count(letter) for result in results.values())
+        return sum(len(re.findall(rf'({letter.lower()}|{letter.upper()})', result['name'])) for result in results.values())
 
     def _letterCounterInResource(self, letter, resource):
         results = self._getPaginatedResults(resource)
@@ -70,12 +71,23 @@ class RickAndMortyConsumer:
         end = time.time()
         return end - start, locationsPerEpisode
 
+    def prettyPrintCharCount(self, results):
+        for (letter, resource) in results:
+            print(f'Letter {letter} in resource {resource} was found {results[(letter, resource)]} times.')
+
+    def prettyPrintLocationsFromEpisodes(self, locationsPerEpisode):
+        for episode in locationsPerEpisode:
+            print(f'Episode {episode} had {len(locationsPerEpisode[episode])} locations: {locationsPerEpisode[episode]}')
 
 if __name__ == '__main__':
     rickAndMortyConsumer = RickAndMortyConsumer()
     executionTimeCharCount, charCounts = rickAndMortyConsumer.countCharsQueried([['l', 'location'],
                                             ['e', 'episode'],
                                             ['c', 'character']])
-    print(f'Execution time was {executionTimeCharCount} seconds')
+    print('\nPart 1\n')
+    rickAndMortyConsumer.prettyPrintCharCount(charCounts)
+    print(f'Execution time was {executionTimeCharCount} second')
+    print('\nPart 2\n')
     executionTimeLocationsPerEpisode, locationsPerEpisode = rickAndMortyConsumer.getLocationsFromEpisodes()
+    rickAndMortyConsumer.prettyPrintLocationsFromEpisodes(locationsPerEpisode)
     print(f'Execution time was {executionTimeLocationsPerEpisode} seconds')
